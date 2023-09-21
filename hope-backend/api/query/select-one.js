@@ -15,9 +15,6 @@
 *     }
 *
 */
-export const selectOne = (table, condition, field) => {
-  return 'SELECT ${field ? field : "*"} FROM $ {table} ${
-    condition ? condition : ""
-  }';
+export const selectOne = (table, condition) => {
+  return `SELECT * FROM ${table} ${condition}`;
 };
-
