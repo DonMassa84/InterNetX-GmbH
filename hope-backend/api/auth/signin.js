@@ -1,55 +1,34 @@
 import connection from "../../db.js";
-import { selectOne } from "./../query/select-one.js";
-import { getError } from "../../utils/get-error.js";
+import { selectOne } from "../query/select-one.js";
 import crypto from "crypto";
-import { updateOne } from "../query/update-one.js";
-import { getUserInfo } from "../../utils/get-user-info.js";
 
 export default function signin(res, props) {
-  const { secret, email, password } = props;
+  const { email, password } = props;
 
-try {
-  let user;
-  secret 
-    ? connection.query(
-      '${selectOne("users", 'WHERE email = '${email}'')}}',
-      (err, rows) => {
-        getError(err);
-        user = rows[0];
-        crypto.pdkdf2(
-          password,
-          rows[0].salt,
-          310000,
-          32,
-          "sha256",
-          (err, hashedPassword) =>{
-            if (err) {
-              res.status(401).json("User not signed");
-            } else if (
-              !crypto.timingSafeEqual(
-                rows[0].hashed_password,
-                hashedPassword
-                )
-              ) {
-                res.status(401).json("User not signed");
-            } else {
-              connection.query(
-                '${updateOne("users")} token = ? WHERE email = ?' ,
-                [sectret, email],
-                (err) => {
-                  getError(err);
-                  res.status()200).json(getUserInfo(rows[0]));
-                }
-              };
-            }
-          }
-        };
+  connection.query(
+    selectOne("users", `WHERE email='${email}'`),
+    (err, rows) => {
+      if (err || rows.length === 0) {
+        return res.status(401).json("User not found or invalid credentials");
       }
-    )
-  : res.status(401).json("User not signed");
-} catch (err) {
-  res.status(500).json({ error: "failed to load data"});
-  }
+
+      const user = rows[0];
+      crypto.pbkdf2(
+        password,
+        user.salt,
+        310000,
+        32,
+        "sha256",
+        (err, hashedPassword) => {
+          if (err || !hashedPassword.equals(user.hashed_password)) {
+            return res.status(401).json("User not signed");
+          }
+
+          res.status(200).json({ message: "Successfully authenticated" });
+        }
+      );
+    }
+  );
 }
-              
+          
       
