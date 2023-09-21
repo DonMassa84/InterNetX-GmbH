@@ -1,34 +1,25 @@
-import connection from "../../db.js";
-import { selectOne } from "../query/select-one.js";
-import crypto from "crypto";
+const express = require('express');
+const router = express.Router();
+const db = require('../db.js');
+const bcrypt = require('bcrypt');
 
-export default function signin(res, props) {
-  const { email, password } = props;
+router.post('/user', async (req, res) => {
+    const { email, fname, lname, password, admin } = req.body;
 
-  connection.query(
-    selectOne("users", `WHERE email='${email}'`),
-    (err, rows) => {
-      if (err || rows.length === 0) {
-        return res.status(401).json("User not found or invalid credentials");
-      }
+    // Hashing des Passworts
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-      const user = rows[0];
-      crypto.pbkdf2(
-        password,
-        user.salt,
-        310000,
-        32,
-        "sha256",
-        (err, hashedPassword) => {
-          if (err || !hashedPassword.equals(user.hashed_password)) {
-            return res.status(401).json("User not signed");
-          }
-
-          res.status(200).json({ message: "Successfully authenticated" });
+    const query = 'INSERT INTO users (email, fname, lname, password_hash, salt, admin) VALUES (?, ?, ?, ?, ?, ?)';
+    db.query(query, [email, fname, lname, hashedPassword, salt, admin], (err, result) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
         }
-      );
-    }
-  );
-}
+        res.status(201).json({ message: 'User erfolgreich erstellt' });
+    });
+});
+
+module.exports = router;
+
           
       
