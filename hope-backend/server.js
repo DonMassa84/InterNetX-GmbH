@@ -3,41 +3,37 @@ const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 
-// Importieren der API-Routen
-const signinRoute = require('./api/auth/signin');
-const selectOneRoute = require('./api/query/select-one');
-const deleteItemsRoute = require('./api/tables/delete-items');
-
 const app = express();
-const PORT = 3000;
-
-// Middleware
 app.use(bodyParser.json());
 
-// Datenbankverbindung
 const db = mysql.createConnection({
-    host: 'localhost',
+    host: 'internetx.cjnu4a2l439i.eu-central-1.rds.amazonaws.com',
     user: 'maxtrustworth',
     password: 'MaxTrustworth123#',
     database: 'internetx'
 });
 
-db.connect((err) => {
-    if (err) {
-        console.error('Fehler bei der Verbindung zur Datenbank:', err);
-        return;
-    }
-    console.log('Erfolgreich mit der Datenbank verbunden.');
+app.post('/user', async (req, res) => {
+    const { email, fname, lname, password, admin } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const query = 'INSERT INTO users (email, fname, lname, password, admin) VALUES (?, ?, ?, ?, ?)';
+    db.query(query, [email, fname, lname, hashedPassword, admin], (err, results) => {
+        if (err) return res.status(500).send('Server error');
+        res.status(201).send('User created');
+    });
 });
 
-// Routen
-app.use('/user', signinRoute);
-app.use('/user', selectOneRoute);
-app.use('/user', deleteItemsRoute);
-
-// Serverstart
-app.listen(PORT, () => {
-    console.log(`Server läuft auf http://localhost:${PORT}`);
+app.get('/user/:email', (req, res) => {
+    // Implement Basic Auth and retrieve user data based on email
 });
+
+app.delete('/user/:email', (req, res) => {
+    // Implement Basic Auth, check for admin status, and delete user based on email
+});
+
+app.listen(3000, () => {
+    console.log('Server started on port 3000');
+});
+
 
 
