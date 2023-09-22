@@ -17,9 +17,9 @@ app.use(bodyParser.json());
 // Datenbankverbindung
 const db = mysql.createConnection({
     host: 'localhost',
-    user: 'id21243083_maxtrustworth',
+    user: 'maxtrustworth',
     password: 'MaxTrustworth123#',
-    database: 'id21243083_internetx'
+    database: 'internetx'
 });
 
 db.connect((err) => {
